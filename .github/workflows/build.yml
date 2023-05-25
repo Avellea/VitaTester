@@ -1,5 +1,5 @@
 # This workflow will build vitaTrak automatically on push and pull request events on any branch.
-name: ?VitaTester.vpk
+name: VitaTester.vpk
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
   build_VPK:
     runs-on: "ubuntu-20.04"
     steps:
-      # clone vitaTrak GitHub repo
+      # clone VitaTester GitHub repo
       - name: Checkout code
         uses: actions/checkout@v3
       # building dependencies (cmake, build-essential, etc.)
