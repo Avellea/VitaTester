@@ -7,6 +7,8 @@ This fork currently implements gyroscope acceleration
 
 ## Extra Credits
 
+Pookette for original project idea and programming
+
 [SMOKE](https://github.com/NamelessGhoul0) for original code
 
 [xerpi](https://github.com/xerpi) for [vita2dlib](https://github.com/xerpi/vita2dlib)
