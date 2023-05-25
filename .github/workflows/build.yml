@@ -1,0 +1,46 @@
+# This workflow will build vitaTrak automatically on push and pull request events on any branch.
+name: ?VitaTester.vpk
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+
+env:
+    VITASDK: /usr/local/vitasdk
+
+jobs:
+  build_VPK:
+    runs-on: "ubuntu-20.04"
+    steps:
+      # clone vitaTrak GitHub repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+      # building dependencies (cmake, build-essential, etc.)
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential libarchive-tools fakeroot zip
+      # install vitaSDK
+      - name: Install vitaSDK
+        run: |
+          git clone https://github.com/vitasdk/vdpm
+          cd vdpm
+          ./bootstrap-vitasdk.sh
+          export PATH=$VITASDK/bin:$PATH
+          ./install-all.sh
+          cd ..
+      # build VitaTester (VPK)
+      - name: Build VitaTester
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make
+      # upload VPK as artifact
+      - name: Upload VPK
+        uses: actions/upload-artifact@v3
+        with:
+          name: VitaTester.vpk
+          path: build/VitaTester.vpk
