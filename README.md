@@ -3,7 +3,7 @@ VitaTester
 
 A simple homebrew for testing the input data on the PSVita.
 
-This fork currently implements gyroscope acceleration 
+This fork currently implements gyroscope and acceleration.
 
 ## Extra Credits
 
