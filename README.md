@@ -7,7 +7,7 @@ This fork currently implements gyroscope and acceleration.
 
 ## Extra Credits
 
-Pookette for original project idea and programming
+[PookaMustard](https://github.com/PookaMustard) for original project idea and programming
 
 [SMOKE](https://github.com/NamelessGhoul0) for original code
 
