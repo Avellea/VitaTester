@@ -29,6 +29,19 @@ link_directories(
 add_executable(VitaTester
   src/main.c
   src/font.c
+  icons/analog.png.h
+  icons/background.png.h
+  icons/circle.png.h
+  icons/cross.png.h
+  icons/dpad.png.h
+  icons/finger_blue.png.h
+  icons/finger_gray.png.h
+  icons/ltrigger.png.h
+  icons/rtrigger.png.h
+  icons/select.png.h
+  icons/square.png.h
+  icons/start.png.h
+  icons/triangle.png.h
 )
 
 target_link_libraries(VitaTester
@@ -52,19 +65,6 @@ vita_create_self(VitaTester.self VitaTester)
 vita_create_vpk(VitaTester.vpk ${VITA_TITLEID} VitaTester.self
   VERSION ${VITA_VERSION}
   NAME ${VITA_APP_NAME}
-  FILE icons/analog.png icons/analog.png
-  FILE icons/background.png icons/background.png
-  FILE icons/circle.png icons/circle.png
-  FILE icons/cross.png icons/cross.png
-  FILE icons/dpad.png icons/dpad.png
-  FILE icons/finger_blue.png icons/finger_blue.png
-  FILE icons/finger_gray.png icons/finger_gray.png
-  FILE icons/ltrigger.png icons/ltrigger.png
-  FILE icons/rtrigger.png icons/rtrigger.png
-  FILE icons/select.png icons/select.png
-  FILE icons/square.png icons/square.png
-  FILE icons/start.png icons/start.png
-  FILE icons/triangle.png icons/triangle.png
   FILE sce_sys/icon0.png sce_sys/icon0.png
   FILE sce_sys/pic0.png sce_sys/pic0.png
   FILE sce_sys/livearea/contents/bg0.png sce_sys/livearea/contents/bg0.png
