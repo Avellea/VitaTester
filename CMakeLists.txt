@@ -43,6 +43,7 @@ target_link_libraries(VitaTester
   SceCommonDialog_stub
   freetype
   png
+  bz2
   z
   m
 )
