@@ -1,4 +1,4 @@
-VitaTester - workflow plz
+VitaTester
 ==================
 
 A simple homebrew for testing the input data on the PSVita.
