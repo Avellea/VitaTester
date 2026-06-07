@@ -12,11 +12,13 @@ env:
 
 jobs:
   build_VPK:
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-22.04"
+    env:
+      PATH: ${{ env.VITASDK }}/bin:${{ env.PATH }}
     steps:
       # clone VitaTester GitHub repo
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       # building dependencies (cmake, build-essential, etc.)
       - name: Install dependencies
         run: |
@@ -27,14 +29,15 @@ jobs:
         run: |
           git clone https://github.com/vitasdk/vdpm
           cd vdpm
-          ./bootstrap-vitasdk.sh
           export PATH=$VITASDK/bin:$PATH
+          ./bootstrap-vitasdk.sh
           ./install-all.sh
           cd ..
       # build VitaTester (VPK)
       - name: Build VitaTester
         run: |
-          mkdir build
+          export PATH=$VITASDK/bin:$PATH
+          mkdir -p build
           cd build
           cmake ..
           make

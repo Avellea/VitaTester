@@ -2,3 +2,14 @@
 build/
 .idea/
 cmake-*
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.o
+*.elf
+*.self
+*.vpk
+*.log
+*.swp
+.DS_Store

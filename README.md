@@ -5,6 +5,19 @@ A simple homebrew for testing the input data on the PSVita.
 
 This fork currently implements gyroscope and acceleration.
 
+## Build
+
+Requires an installed `VITASDK` and its `vita.toolchain.cmake` file.
+
+```bash
+mkdir -p build
+cd build
+cmake ..
+make
+```
+
+After build, the generated `.vpk` file can be installed on a Vita.
+
 ## Extra Credits
 
 [PookaMustard](https://github.com/PookaMustard) for original project idea and programming
