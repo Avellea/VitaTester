@@ -1,30 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <math.h>
 
 #include <psp2/ctrl.h>
 #include <psp2/kernel/processmgr.h>
+#include <psp2/kernel/clib.h>
 #include <psp2/touch.h>
 #include <psp2/motion.h>
 #include <vita2d.h>
 
 // horrible, please remember to NOT do this in your own code, kids!
-#include "../icons/analog.png.h"
-#include "../icons/background.png.h"
-#include "../icons/circle.png.h"
-#include "../icons/cross.png.h"
-#include "../icons/dpad.png.h"
-#include "../icons/finger_blue.png.h"
-#include "../icons/finger_gray.png.h"
-#include "../icons/ltrigger.png.h"
-#include "../icons/rtrigger.png.h"
-#include "../icons/select.png.h"
-#include "../icons/square.png.h"
-#include "../icons/start.png.h"
-#include "../icons/triangle.png.h"
-
-#define printf sceClibPrintf
+#include "analog.png.h"
+#include "background.png.h"
+#include "circle.png.h"
+#include "cross.png.h"
+#include "dpad.png.h"
+#include "finger_blue.png.h"
+#include "finger_gray.png.h"
+#include "ltrigger.png.h"
+#include "rtrigger.png.h"
+#include "select.png.h"
+#include "square.png.h"
+#include "start.png.h"
+#include "triangle.png.h"
 
 /* Font buffer */
 extern unsigned int basicfont_size;
@@ -34,17 +34,12 @@ SceCtrlData     pad;
 SceTouchData    touch;
 SceMotionState  motion_state;
 
-signed char lx;
-signed char ly;
-signed char rx;
-signed char ry;
-int fxTouch;
-int fyTouch;
-int bxTouch;
-int byTouch;
+static inline float lerp(float value, float from_max, float to_max)
+{
+    return (value * to_max) / from_max;
+}
 
-#define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
-#define PI 3.14159265
+#define PI 3.14159265f
 
 #define BLACK   RGBA8(  0,   0,   0, 255)
 #define WHITE   RGBA8(255, 255, 255, 255)
@@ -67,22 +62,57 @@ int main()
 
     vita2d_font *font = vita2d_load_font_mem(basicfont, basicfont_size);
 
-    /* Setup image buffers */
-    vita2d_texture *bg = vita2d_load_PNG_buffer((void*)background_png);
-    vita2d_texture *cross = vita2d_load_PNG_buffer((void*)cross_png);
-    vita2d_texture *circle = vita2d_load_PNG_buffer((void*)circle_png);
-    vita2d_texture *square = vita2d_load_PNG_buffer((void*)square_png);
-    vita2d_texture *triangle = vita2d_load_PNG_buffer((void*)triangle_png);
-    vita2d_texture *select = vita2d_load_PNG_buffer((void*)select_png);
-    vita2d_texture *start = vita2d_load_PNG_buffer((void*)start_png);
-    vita2d_texture *ltrigger = vita2d_load_PNG_buffer((void*)ltrigger_png);
-    vita2d_texture *rtrigger = vita2d_load_PNG_buffer((void*)rtrigger_png);
-    vita2d_texture *analog = vita2d_load_PNG_buffer((void*)analog_png);
-    vita2d_texture *dpad = vita2d_load_PNG_buffer((void*)dpad_png);
-    vita2d_texture *frontTouch = vita2d_load_PNG_buffer((void*)finger_gray_png);
-    vita2d_texture *backTouch = vita2d_load_PNG_buffer((void*)finger_blue_png);
+    struct TextureEntry {
+        const unsigned char *data;
+        const char *name;
+        vita2d_texture **target;
+    };
 
-    while (1) {
+    vita2d_texture *bg = NULL;
+    vita2d_texture *cross = NULL;
+    vita2d_texture *circle = NULL;
+    vita2d_texture *square = NULL;
+    vita2d_texture *triangle = NULL;
+    vita2d_texture *select = NULL;
+    vita2d_texture *start = NULL;
+    vita2d_texture *ltrigger = NULL;
+    vita2d_texture *rtrigger = NULL;
+    vita2d_texture *analog = NULL;
+    vita2d_texture *dpad = NULL;
+    vita2d_texture *frontTouch = NULL;
+    vita2d_texture *backTouch = NULL;
+
+    struct TextureEntry textures[] = {
+        { background_png, "background", &bg },
+        { cross_png, "cross", &cross },
+        { circle_png, "circle", &circle },
+        { square_png, "square", &square },
+        { triangle_png, "triangle", &triangle },
+        { select_png, "select", &select },
+        { start_png, "start", &start },
+        { ltrigger_png, "ltrigger", &ltrigger },
+        { rtrigger_png, "rtrigger", &rtrigger },
+        { analog_png, "analog", &analog },
+        { dpad_png, "dpad", &dpad },
+        { finger_gray_png, "frontTouch", &frontTouch },
+        { finger_blue_png, "backTouch", &backTouch },
+    };
+
+    if (!font) {
+        sceClibPrintf("Failed to load font\n");
+        goto cleanup0;
+    }
+
+    for (size_t i = 0; i < sizeof(textures) / sizeof(textures[0]); ++i) {
+        *textures[i].target = vita2d_load_PNG_buffer((void*)textures[i].data);
+        if (!*textures[i].target) {
+            sceClibPrintf("Failed to load %s texture\n", textures[i].name);
+            goto cleanup1;
+        }
+    }
+
+    bool running = true;
+    while (running) {
         sceCtrlPeekBufferPositive(0, &pad, 1);
 
         sceMotionGetState(&motion_state);
@@ -102,15 +132,15 @@ int main()
 
         vita2d_font_draw_textf(font, 10, 40, WHITE, 19, "Gyroscope: (%5.2fX, %5.2fY, %5.2fZ)", motion_state.angularVelocity.x, motion_state.angularVelocity.y, motion_state.angularVelocity.z);
 
-        vita2d_font_draw_textf(font, 10, 525, (pad.lx == 127 & pad.ly == 127) ? GREEN : WHITE, 19, "Left: (%3dX, %3dY)", pad.lx, pad.ly);
+        vita2d_font_draw_textf(font, 10, 525, (pad.lx == 127 && pad.ly == 127) ? GREEN : WHITE, 19, "Left: (%3dX, %3dY)", pad.lx, pad.ly);
 
-        vita2d_font_draw_textf(font, 724, 525, (pad.rx == 127 & pad.ry == 127) ? GREEN : WHITE, 19, "Right: (%3dX, %3dY)", pad.rx, pad.ry);
+        vita2d_font_draw_textf(font, 724, 525, (pad.rx == 127 && pad.ry == 127) ? GREEN : WHITE, 19, "Right: (%3dX, %3dY)", pad.rx, pad.ry);
 
         /* Update joystick values */
-        lx = (signed char)pad.lx - 128;
-        ly = (signed char)pad.ly - 128;
-        rx = (signed char)pad.rx - 128;
-        ry = (signed char)pad.ry - 128;
+        signed char lx = (signed char)pad.lx - 128;
+        signed char ly = (signed char)pad.ly - 128;
+        signed char rx = (signed char)pad.rx - 128;
+        signed char ry = (signed char)pad.ry - 128;
 
         /* Draw and move left analog stick on screen */
         vita2d_draw_texture(analog, (86 + lx / 8), (284 + ly / 8));
@@ -179,44 +209,40 @@ int main()
         }
 
         /* Draw front touch on screen */
-        sceTouchPeek(SCE_TOUCH_PORT_FRONT, &touch, 1);
-        for (int i = 0; i < touch.reportNum; i++) {
-            fxTouch = (lerp(touch.report[i].x, 1919, 960) - 50);
-            fyTouch = (lerp(touch.report[i].y, 1087, 544) - 56.5);
-            vita2d_draw_texture(frontTouch, fxTouch, fyTouch);
+        if (sceTouchPeek(SCE_TOUCH_PORT_FRONT, &touch, 1) > 0) {
+            for (int i = 0; i < touch.reportNum; i++) {
+                int fxTouch = (int)(lerp(touch.report[i].x, 1919.0f, 960.0f) - 50.0f);
+                int fyTouch = (int)(lerp(touch.report[i].y, 1087.0f, 544.0f) - 56.5f);
+                vita2d_draw_texture(frontTouch, fxTouch, fyTouch);
+            }
         }
 
         /* Draw rear touch on screen */
-        sceTouchPeek(SCE_TOUCH_PORT_BACK, &touch, 1);
-        for (int i = 0; i < touch.reportNum; i++) {
-            bxTouch = (lerp(touch.report[i].x, 1919, 960) - 50);
-            byTouch = (lerp(touch.report[i].y, 1285, 855) - 113);
-            vita2d_draw_texture(backTouch, bxTouch, byTouch);
+        if (sceTouchPeek(SCE_TOUCH_PORT_BACK, &touch, 1) > 0) {
+            for (int i = 0; i < touch.reportNum; i++) {
+                int bxTouch = (int)(lerp(touch.report[i].x, 1919.0f, 960.0f) - 50.0f);
+                int byTouch = (int)(lerp(touch.report[i].y, 1285.0f, 855.0f) - 113.0f);
+                vita2d_draw_texture(backTouch, bxTouch, byTouch);
+            }
         }
 
         vita2d_end_drawing();
         vita2d_swap_buffers();
     }
 
+cleanup1:
+    for (size_t i = 0; i < sizeof(textures) / sizeof(textures[0]); ++i) {
+        if (*textures[i].target) {
+            vita2d_free_texture(*textures[i].target);
+        }
+    }
+
+    if (font) {
+        vita2d_free_font(font);
+    }
+
+cleanup0:
     vita2d_fini();
-
-    /* Cleanup */
-    vita2d_free_font(font);
-    vita2d_free_texture(bg);
-    vita2d_free_texture(cross);
-    vita2d_free_texture(circle);
-    vita2d_free_texture(square);
-    vita2d_free_texture(triangle);
-    vita2d_free_texture(select);
-    vita2d_free_texture(start);
-    vita2d_free_texture(ltrigger);
-    vita2d_free_texture(rtrigger);
-    vita2d_free_texture(analog);
-    vita2d_free_texture(dpad);
-    vita2d_free_texture(frontTouch);
-    vita2d_free_texture(backTouch);
-
-	sceKernelExitProcess(0);
-
+    sceKernelExitProcess(0);
     return 0;
 }
